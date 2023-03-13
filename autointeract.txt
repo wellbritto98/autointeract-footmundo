@@ -1,11 +1,13 @@
 // ==UserScript==
-// @name         AutoInteract - Footmundo - versão de testes
+// @name         AutoInteract - Footmundo
 // @namespace    https://www.footmundo.com/
 // @version      1.4
 // @description  Interage automaticamente com todos os jogadores na lista de relacionamentos no Footmundo.
 // @author       Vicente Ayuso
 // @match        https://www.footmundo.com/relacionamentos/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/wellbritto98/autointeract-footmundo/main/autointeract.txt
+// @downloadURL  https://raw.githubusercontent.com/wellbritto98/autointeract-footmundo/main/autointeract.txt
 // ==/UserScript==
 
 //changelog: ver 1.4 - O script faz todas as 3 interações (Se houver)
