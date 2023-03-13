@@ -1,0 +1,217 @@
+// ==UserScript==
+// @name         AutoInteract - Footmundo - versão de testes
+// @namespace    https://www.footmundo.com/
+// @version      1.4
+// @description  Interage automaticamente com todos os jogadores na lista de relacionamentos no Footmundo.
+// @author       Vicente Ayuso
+// @match        https://www.footmundo.com/relacionamentos/*
+// @grant        none
+// ==/UserScript==
+
+//changelog: ver 1.4 - O script faz todas as 3 interações (Se houver)
+
+(function() {
+    'use strict';
+
+    // Adiciona uma nova div com class='bloc' imediatamente abaixo de uma outra div ja existente na pagina que possui class="titulo-pagina"
+    const divTitulo = $(".titulo-pagina");
+    const divNova = $("<div>");
+    divTitulo.after(divNova);
+
+    // Adiciona um id='caixa-do-script' dentro da nova div com class='bloc'
+    const divScript = $("<div>").attr("id", "caixa-do-script");
+    divNova.append(divScript);
+
+    // Adiciona um botão do tipo submit com class="btn_padrao" dentro da div 'caixa-do-script'
+    const btnInteragir = $("<button>").text("Interagir").addClass("btn-padrao").attr("id", "btn-ini-interacao");
+    const pActionButton = $("<p>").attr("id", "actionbutton").append(btnInteragir);
+    const h2Titulo = $("<h2>").text("Interação automática").attr("id", "h2interact");
+    const h3popup = $("<h3>").text("OS POPUPS DEVEM ESTAR LIBERADOS PARA QUE O SCRIPT FUNCIONE").attr("id", "h3interact");
+    const pTexto = $("<p>").text("Clique em interagir para começar a interagir").attr("id", "paragrafo-texto").css("text-align", "center");
+    divScript.append(h2Titulo, pTexto, pActionButton, h3popup);
+
+    // Muda a cor do cabeçalho h2 para preto
+    h2Titulo.css("color", "black");
+    h3popup.css("color", "red");
+    // Adiciona o CSS fornecido
+    const css = `
+    #caixa-do-script {
+      background-color: #f9f9f9;
+      padding: 1em;
+      margin: 1em 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    #btn-ini-interacao {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 0.5em 1em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #btn-ini-interacao:hover {
+      background-color: #0069d9;
+    }
+
+    #actionbutton {
+      text-align: center;
+      margin: 1em 0;
+    }
+
+    #h2interact {
+      font-size: 1.5em;
+      margin-top: 0;
+      text-align: center;
+    }
+
+    #h3interact {
+      font-size: 1.2em;
+      margin: 1em 0;
+      color: #dc3545;
+      text-align: center;
+    }
+    .iframe-estilizado {
+      width: 100%;
+      height: 500px;
+      display: none;
+      margin: 0 auto;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+
+
+    `;
+
+const style = $("<style>").text(css);
+$("head").append(style);
+
+    // Lista todos os links que possuem id="link_padrao"
+    const listaLinks = [];
+    $(".padrao tr").each(function() {
+        const linkVer = $(this).find("td:last-child a[id^='link_padrao']");
+        if (linkVer.length > 0) {
+            listaLinks.push(linkVer.attr("href"));
+        }
+    });
+
+
+    let linkIndex = 0;
+
+    // Lista de preferência das values disponíveis para interação amigável
+    const preferenciasAmigaveis = [13, 12, 11, 10, 36, 9, 5, 4, 3, 2, 1];
+
+    // Cria a div do iframe
+    const divIframe = document.createElement("div");
+    divIframe.id = "iframe";
+    document.getElementById("caixa-do-script").appendChild(divIframe);
+
+    // Cria o elemento iframe
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("class", "iframe-estilizado"); // adiciona uma classe para aplicar estilos CSS
+    iframe.style.overflow = "hidden"; // Adicionado estilo para ocultar a scrollbar do iframe
+    iframe.style.width = "100%";
+    iframe.style.height = "500px";
+    iframe.style.display = "none";
+    iframe.style.margin = "0 auto";
+    iframe.style.textAlign = "center";
+    divIframe.appendChild(iframe);
+    const btnIniInteracao = document.getElementById("btn-ini-interacao");
+    btnIniInteracao.addEventListener("click", function() {
+      iframe.style.display = "block";
+    });
+
+    // Função para carregar a próxima URL no iframe
+    const carregarUrl = function(url) {
+      return new Promise(function(resolve) {
+        iframe.onload = function() {
+          resolve();
+        };
+        iframe.src = url;
+      });
+    };
+
+    // Função para selecionar a interação amigável baseada na lista de preferências
+    const selecionarInteracaoAmigavel = function() {
+      return new Promise(function(resolve, reject) {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const selectInteracao = iframeDoc.querySelector("select[name='interacao']");
+        if (!selectInteracao) {
+          iframe.contentWindow.close();
+          reject();
+          return;
+        }
+
+        let optionAmigavel;
+        for (let j = 0; j < 3; j++) {
+          for (let i = 0; i < preferenciasAmigaveis.length; i++) {
+            const value = preferenciasAmigaveis[i];
+            optionAmigavel = iframeDoc.querySelector("optgroup[label='Amigáveis'] option[value='" + value + "']");
+            if (optionAmigavel) {
+              break;
+            }
+          }
+
+          if (!optionAmigavel) {
+            alert("Não foi possível encontrar uma interação amigável para " + link);
+            iframe.contentWindow.close();
+            reject();
+            return;
+          }
+
+          selectInteracao.value = optionAmigavel.value;
+          iframeDoc.querySelector("input[name='interagir']").click();
+          if (j < 2) {
+            setTimeout(function() {
+              // Espera 1 segundo antes de continuar
+              selecionarInteracaoAmigavel().then(resolve).catch(reject);
+            }, 1000);
+            return;
+          }
+        }
+
+    // Espera 1 segundo antes de resolver a Promise
+    setTimeout(function() {
+      resolve();
+    }, 1000);
+  });
+};
+    // Função para interagir com o jogador
+    const interagirComJogador = async function() {
+      try {
+        await selecionarInteracaoAmigavel();
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    // Função para iniciar a interação com cada jogador
+    const iniciarInteracao = async function() {
+      // Verificar se todos os links foram abertos
+      if (linkIndex >= listaLinks.length) {
+        return;
+      }
+
+      const link = listaLinks[linkIndex++];
+      try {
+        await carregarUrl(link);
+        await interagirComJogador();
+      } catch (error) {
+        console.log(error);
+      }
+      await iniciarInteracao();
+    };
+
+    // Adiciona um evento de clique ao botão Interagir para iniciar a interação automática
+    $("#btn-ini-interacao").on("click", function() {
+      $(this).attr("disabled", true);
+      iniciarInteracao();
+    });
+
+})();
